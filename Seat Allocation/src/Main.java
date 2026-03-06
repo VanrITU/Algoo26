@@ -9,14 +9,39 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class Main {
+    public static int n = 0;
+    public static int m = 0;
+
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        int n = Integer.parseInt(st.nextToken());
-        int m = Integer.parseInt(st.nextToken());
+        n = Integer.parseInt(st.nextToken());
+        m = Integer.parseInt(st.nextToken());
 
         //list of parties
+        Party[] parties = new Party[n];
+
+        for (int i = 0; i < n; i++) {
+            st = new StringTokenizer(br.readLine());
+            int votes = Integer.parseInt(st.nextToken());
+            parties[i] = new Party(votes);
+        }
+
+        //MaxPQ runs here
+        MaxPQ<Party> pq = new MaxPQ<Party>(parties); //does thou work?
+        //DET SKAL IK VÆRE ET ARRAY OVER PARTIES MEN OVER QUOTIENTEN
+
+        // something with: behandl top af queue med compare, fjern gammel størst og tilføj nu størst
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; i++)
+                if (parties[i].getQuotient() == pq.max()) {
+
+                }
+
+        }
+
+        //Print function here
 
 
 
@@ -42,11 +67,23 @@ public class Main {
         @Override
         public int compareTo(Party w) {
             //D'Hondts formular
-            //forstå lige lidt mere maxPQ før du lige laver det her!
+
+            //if this quoiteint størrer end w -> tilføj 1 seat til this og udregn ny quoitient
+            if (this.getQuotient() > w.getQuotient()) {
+                this.seats += 1;
+                this.quotient = this.quotient / (m+1); //D'Hondts
+            }
+
+            // else if this quoitient mindre end w -> +1 til seat for w
+            if (w.getQuotient() > this.getQuotient()) {
+                w.seats += 1;
+                w.quotient = w.quotient / (m+1); //D'Hondts
+            }
 
 
 
-            return 0; //midlertidigt
+
+            return this.getQuotient() < w.getQuotient() ? -1:1;
 
         }
 
@@ -82,7 +119,7 @@ public class Main {
      *  @param <Key> the generic type of key on this priority queue
      */
 
-    public class MaxPQ<Key> implements Iterable<Key> {
+    public static class MaxPQ<Key> implements Iterable<Key> {
         private Key[] pq;                    // store items at indices 1 to n
         private int n;                       // number of items on priority queue
         private Comparator<Key> comparator;  // optional comparator
