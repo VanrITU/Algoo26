@@ -50,21 +50,21 @@ public class Main {
     //class for a party
     // keeps track of and quotient and seats
     public static class Party implements Comparable<Party> {
-        int votes;
+        long votes; //instead of int
         int seats;
 
-        public Party(int votes) {
+        public Party(long votes) { //needs to be long bc of int is not large enough in test2
             this.votes = votes; //quotient always starts with the initial votes of the party
             this.seats = 0; //always starts at 0
         }
 
-        public float getQuotient() {
-            return votes / (seats + 1); //D'Hondts
+        public double getQuotient() { //changed to double bc of test2
+            return (double) votes / (seats + 1); //D'Hondts - I needed the (float part)
         }
 
         @Override
         public int compareTo(Party w) {
-            return Float.compare(this.getQuotient(), w.getQuotient());
+            return Double.compare(this.getQuotient(), w.getQuotient()); //changed to double bc of test2
 
         }
     }
