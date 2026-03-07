@@ -9,8 +9,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class Main {
-    public static int n = 0;
-    public static int m = 0;
+    public static int m;
+    public static int n;
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -21,28 +21,28 @@ public class Main {
 
         //list of parties
         Party[] parties = new Party[n];
+        MaxPQ<Party> pq = new MaxPQ<>(); //does thou work?
 
         for (int i = 0; i < n; i++) {
             st = new StringTokenizer(br.readLine());
             int votes = Integer.parseInt(st.nextToken());
             parties[i] = new Party(votes);
+            pq.insert(parties[i]);
         }
 
         //MaxPQ runs here
-        MaxPQ<Party> pq = new MaxPQ<Party>(parties); //does thou work?
-        //DET SKAL IK VÆRE ET ARRAY OVER PARTIES MEN OVER QUOTIENTEN
 
-        // something with: behandl top af queue med compare, fjern gammel størst og tilføj nu størst
+        // something with: behandl top af queue med compare, fjern gammel størst og tilføj nu ny
         for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; i++)
-                if (parties[i].getQuotient() == pq.max()) {
-
-                }
-
+            Party largest = pq.delMax();
+            largest.seats++;
+            pq.insert(largest);
         }
 
         //Print function here
-
+        for (Party party : parties) {
+            System.out.println(party.seats);
+        }
 
 
     }
@@ -50,44 +50,23 @@ public class Main {
     //class for a party
     // keeps track of and quotient and seats
     public static class Party implements Comparable<Party> {
-        int quotient;
+        int votes;
         int seats;
 
         public Party(int votes) {
-            this.quotient = votes; //quotient always starts with the initial votes of the party
+            this.votes = votes; //quotient always starts with the initial votes of the party
             this.seats = 0; //always starts at 0
-
-
-
         }
 
-        public int getQuotient() {return quotient;}
-        public int getSeats() {return seats;}
+        public float getQuotient() {
+            return votes / (seats + 1); //D'Hondts
+        }
 
         @Override
         public int compareTo(Party w) {
-            //D'Hondts formular
-
-            //if this quoiteint størrer end w -> tilføj 1 seat til this og udregn ny quoitient
-            if (this.getQuotient() > w.getQuotient()) {
-                this.seats += 1;
-                this.quotient = this.quotient / (m+1); //D'Hondts
-            }
-
-            // else if this quoitient mindre end w -> +1 til seat for w
-            if (w.getQuotient() > this.getQuotient()) {
-                w.seats += 1;
-                w.quotient = w.quotient / (m+1); //D'Hondts
-            }
-
-
-
-
-            return this.getQuotient() < w.getQuotient() ? -1:1;
+            return Float.compare(this.getQuotient(), w.getQuotient());
 
         }
-
-
     }
 
 
