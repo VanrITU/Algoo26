@@ -1,10 +1,11 @@
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Stack;
 import java.util.StringTokenizer;
 
 import java.io.*;
-
+import java.util.Random;
 
 
 //Edge weighted digraph
@@ -12,8 +13,6 @@ import java.util.NoSuchElementException;
 
 //Bag
 import java.util.Iterator;
-
-
 
 public class Main {
     public static int m;
@@ -32,13 +31,20 @@ public class Main {
 
         People[] persons = new People[n];
 
+        DirectedEdge[] edges = new DirectedEdge[m];
+
+        EdgeWeightedDigraph weightedDigraph = new EdgeWeightedDigraph(m);
+
+
         for (int i = 0; i < n; i++) {
             //runs through all people
             //should save everyone as a person Class
             st = new StringTokenizer(br.readLine());
             String name = st.nextToken();
-            int skep = Integer.parseInt(st.nextToken());
-            persons[i] = new People(name, skep);
+            double skep = Double.parseDouble(st.nextToken());
+
+            persons[i] = new People(name, skep, i);
+
 
 
         }
@@ -47,8 +53,17 @@ public class Main {
             //runs through all connections
             //should call the graph thingy
             st = new StringTokenizer(br.readLine());
-            String person1 = st.nextToken();
-            String person2 = st.nextToken();
+            String name1 = st.nextToken();
+            String name2 = st.nextToken();
+
+            People p1 = People.findByName(persons, name1);
+            People p2 = People.findByName(persons, name2);
+
+
+            assert p1 != null;
+            assert p2 != null;
+
+            edges[i]=new DirectedEdge(p1.getId(),p2.getId(),p1.getSkep());
 
 
 
@@ -58,6 +73,7 @@ public class Main {
         //final line should save the name for this is the person that starts
         st = new StringTokenizer(br.readLine());
         String personZero = st.nextToken();
+        People p0 = People.findByName(persons, personZero);
 
 
         //days running
@@ -77,26 +93,41 @@ public class Main {
     //tracks name and skepticism
     public static class People {
         String name;
-        int skep;
+        double skep;
+        int id;
 
-        public People(String name, int skep) {
+        public People(String name, double skep, int id) {
             this.name = name;
             this.skep = skep;
+            this.id = id;
         }
 
         public String getName() {
             return name;
         }
 
-        public int getSkep() {
+        public double getSkep() {
             return skep;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public static People findByName(People[] pArr, String name) {
+            for (People p : pArr) {
+                if (p.getName().equals(name)) {
+                    return p;
+                }
+            }
+            return null;
         }
 
 
     }
 
     //Bag Class
-    public class Bag<Item> implements Iterable<Item> {
+    public static class Bag<Item> implements Iterable<Item> {
         private Node<Item> first;    // beginning of bag
         private int n;               // number of elements in bag
 
@@ -180,7 +211,7 @@ public class Main {
 
 
     //Directed Edge Class
-    public class DirectedEdge {
+    public static class DirectedEdge {
         private final int v;
         private final int w;
         private final double weight;
@@ -240,7 +271,7 @@ public class Main {
     }
 
     //Weighted DiGraph Class
-    public class EdgeWeightedDigraph {
+    public static class EdgeWeightedDigraph {
         private static final String NEWLINE = System.getProperty("line.separator");
 
         private final int V;                // number of vertices in this digraph
@@ -272,6 +303,7 @@ public class Main {
          * @throws IllegalArgumentException if {@code V < 0}
          * @throws IllegalArgumentException if {@code E < 0}
          */
+        /*
         public EdgeWeightedDigraph(int V, int E) {
             this(V);
             if (E < 0) throw new IllegalArgumentException("Number of edges in a Digraph must be non-negative");
@@ -282,7 +314,7 @@ public class Main {
                 DirectedEdge e = new DirectedEdge(v, w, weight);
                 addEdge(e);
             }
-        }
+        }*/
 
         /**
          * Initializes an edge-weighted digraph from the specified input stream.
@@ -296,6 +328,7 @@ public class Main {
          * @throws IllegalArgumentException if the endpoints of any edge are not in prescribed range
          * @throws IllegalArgumentException if the number of vertices or edges is negative
          */
+        /*
         public EdgeWeightedDigraph(In in) {
             if (in == null) throw new IllegalArgumentException("argument is null");
             try {
@@ -321,7 +354,7 @@ public class Main {
             catch (NoSuchElementException e) {
                 throw new IllegalArgumentException("invalid input format in EdgeWeightedDigraph constructor", e);
             }
-        }
+        }*/
 
         /**
          * Initializes a new edge-weighted digraph that is a deep copy of {@code G}.
