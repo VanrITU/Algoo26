@@ -1,15 +1,8 @@
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.Stack;
-import java.util.StringTokenizer;
-
+import java.util.*;
 import java.io.*;
 
-import java.util.NoSuchElementException;
-
 //Bag
-import java.util.Iterator;
+
 
 public class Main {
     public static int m;
@@ -29,6 +22,7 @@ public class Main {
         d = Integer.parseInt(st.nextToken()); //amount of days
 
         People[] persons = new People[n];
+        HashMap<String, People> map = new HashMap<>();
 
 
         //runs through all people
@@ -38,6 +32,7 @@ public class Main {
             String name = st.nextToken();
             int skep = Integer.parseInt(st.nextToken());
             persons[i] = new People(name, skep, i);
+            map.put(name, persons[i]);
 
         }
 
@@ -52,8 +47,9 @@ public class Main {
             String name1 = st.nextToken();
             String name2 = st.nextToken();
 
-            People p1 = People.findByName(persons, name1);
-            People p2 = People.findByName(persons, name2);
+            People p1 = map.get(name1);
+            People p2 = map.get(name2);
+
 
             //undirected graph adding connections (both ways)
             graph.addEdge(p1.getId(), p2.getId());
@@ -65,42 +61,62 @@ public class Main {
         //final line should save the name for this is the person that starts
         st = new StringTokenizer(br.readLine());
         String personZero = st.nextToken();
-        People p0 = People.findByName(persons, personZero);
+        People p0 = map.get(personZero);
 
 
         //empty array for amount of distinct people have told each other persons
         int[] timesHeard = new int[n];
-        boolean[] believes = new boolean[n];
+        boolean[] believes = new boolean[n]; //can spread
+
+        boolean[] haveHeard = new boolean[n]; //tracks all who have heard from at least 1
+
+
+        HashSet<Integer>[] toldConnection = new HashSet[n];
+        for (int i = 0; i < n; i++) {
+            toldConnection[i] = new HashSet<>();
+        }
 
         believes[p0.getId()] = true; //ads the right personZero first and that they always believe by default
+        haveHeard[p0.getId()] = true;
+
+        //queue to limit time of processes
+        Queue<Integer> newSpreaders = new LinkedList<>();
+        newSpreaders.add(p0.getId());
 
 
         //day cycle
          for (int i = 0; i < d; i++) {
-             boolean[] newBelieves = believes.clone();
+             if (newSpreaders.isEmpty()) break;
 
-             for (int j = 0; j < n; j++) {
-                 //makes sure that the following code is only for all who does believe the rumor because they can spread it
-                 if (!believes[j]) continue;
+             Queue<Integer> nextSpreaders = new LinkedList<>();
+
+
+
+             while (!newSpreaders.isEmpty()) {
+                 int j = newSpreaders.poll();
 
                  //go through only neighbors that dont belive already ad increase times they heard the rumor
                  for (int k : graph.adj(j)) {
-                     if (!believes[k]) {
-                         timesHeard[k]++;
+                     if (toldConnection[k].add(j)) {
+                         haveHeard[k] = true;
 
                          //compares times heard and their individual skeptism in order to decide if the believe or not
-                         if (timesHeard[k] >= (int) persons[k].getSkep()) {
-                             newBelieves[k] = true;
+                         if (!believes[k]) {
+                             timesHeard[k]++;
+                             if (timesHeard[k] >= persons[k].getSkep()) {
+                                 believes[k] = true;
+                                 nextSpreaders.add(k);
+                             }
                          }
                      }
                  }
              }
-             believes = newBelieves;
+             newSpreaders =  nextSpreaders;
          }
 
          //makes sure to exclude person zero in all the persons and add all does who are not o
         for (int i = 0; i < n; i++) {
-            if (believes[i] && i != p0.getId()) {
+            if (haveHeard[i] && i != p0.getId()) {
                 rumoredHeardBy++;
             }
         }
@@ -449,132 +465,6 @@ public class Main {
 
     }
 
-    //Queue Class
-    public class Queue<Item> implements Iterable<Item> {
-        private Node<Item> first;    // beginning of queue
-        private Node<Item> last;     // end of queue
-        private int n;               // number of elements on queue
-
-        // helper linked list class
-        private static class Node<Item> {
-            private Item item;
-            private Node<Item> next;
-        }
-
-        /**
-         * Initializes an empty queue.
-         */
-        public Queue() {
-            first = null;
-            last  = null;
-            n = 0;
-        }
-
-        /**
-         * Returns true if this queue is empty.
-         *
-         * @return {@code true} if this queue is empty; {@code false} otherwise
-         */
-        public boolean isEmpty() {
-            return first == null;
-        }
-
-        /**
-         * Returns the number of items in this queue.
-         *
-         * @return the number of items in this queue
-         */
-        public int size() {
-            return n;
-        }
-
-        /**
-         * Returns the item least recently added to this queue.
-         *
-         * @return the item least recently added to this queue
-         * @throws NoSuchElementException if this queue is empty
-         */
-        public Item peek() {
-            if (isEmpty()) throw new NoSuchElementException("Queue underflow");
-            return first.item;
-        }
-
-        /**
-         * Adds the item to this queue.
-         *
-         * @param  item the item to add
-         */
-        public void enqueue(Item item) {
-            Node<Item> oldlast = last;
-            last = new Node<Item>();
-            last.item = item;
-            last.next = null;
-            if (isEmpty()) first = last;
-            else           oldlast.next = last;
-            n++;
-        }
-
-        /**
-         * Removes and returns the item on this queue that was least recently added.
-         *
-         * @return the item on this queue that was least recently added
-         * @throws NoSuchElementException if this queue is empty
-         */
-        public Item dequeue() {
-            if (isEmpty()) throw new NoSuchElementException("Queue underflow");
-            Item item = first.item;
-            first = first.next;
-            n--;
-            if (isEmpty()) last = null;   // to avoid loitering
-            return item;
-        }
-
-        /**
-         * Returns a string representation of this queue.
-         *
-         * @return the sequence of items in FIFO order, separated by spaces
-         */
-        public String toString() {
-            StringBuilder s = new StringBuilder();
-            for (Item item : this) {
-                s.append(item);
-                s.append(' ');
-            }
-            return s.toString();
-        }
-
-        /**
-         * Returns an iterator that iterates over the items in this queue in FIFO order.
-         *
-         * @return an iterator that iterates over the items in this queue in FIFO order
-         */
-        public Iterator<Item> iterator()  {
-            return new LinkedIterator(first);
-        }
-
-        // a linked-list iterator
-        private class LinkedIterator implements Iterator<Item> {
-            private Node<Item> current;
-
-            public LinkedIterator(Node<Item> first) {
-                current = first;
-            }
-
-            public boolean hasNext() {
-                return current != null;
-            }
-
-            public Item next() {
-                if (!hasNext()) throw new NoSuchElementException();
-                Item item = current.item;
-                current = current.next;
-                return item;
-            }
-        }
-
-
-
-    }
 
 
 
