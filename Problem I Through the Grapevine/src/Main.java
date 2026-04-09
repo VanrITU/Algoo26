@@ -19,6 +19,8 @@ public class Main {
     public static int rumoredHeardBy = 0;
 
     public static void main(String[] args) throws IOException {
+
+        //--- Setup for all the input and parsing
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
@@ -28,27 +30,24 @@ public class Main {
 
         People[] persons = new People[n];
 
-        DirectedEdge[] edges = new DirectedEdge[m];
 
-        EdgeWeightedDigraph weightedDigraph = new EdgeWeightedDigraph(m);
-
-
+        //runs through all people
         for (int i = 0; i < n; i++) {
-            //runs through all people
             //should save everyone as a person Class
             st = new StringTokenizer(br.readLine());
             String name = st.nextToken();
-            double skep = Double.parseDouble(st.nextToken());
-
+            int skep = Integer.parseInt(st.nextToken());
             persons[i] = new People(name, skep, i);
-
-
 
         }
 
+        Digraph graph = new Digraph(n);
+
+
+        //runs through all connections
         for (int i = 0; i < m; i++) {
             //runs through all connections
-            //should call the graph thingy
+
             st = new StringTokenizer(br.readLine());
             String name1 = st.nextToken();
             String name2 = st.nextToken();
@@ -56,13 +55,9 @@ public class Main {
             People p1 = People.findByName(persons, name1);
             People p2 = People.findByName(persons, name2);
 
-
-            assert p1 != null;
-            assert p2 != null;
-
-            edges[i]=new DirectedEdge(p1.getId(),p2.getId(),p1.getSkep());
-
-
+            //undirected graph adding connections (both ways)
+            graph.addEdge(p1.getId(), p2.getId());
+            graph.addEdge(p2.getId(), p1.getId());
 
         }
 
@@ -73,11 +68,42 @@ public class Main {
         People p0 = People.findByName(persons, personZero);
 
 
-        //days running
-        for (int i = 0; i < d; i++) {
-            //function to run for each day
-        }
+        //empty array for amount of distinct people have told each other persons
+        int[] timesHeard = new int[n];
+        boolean[] believes = new boolean[n];
 
+        believes[p0.getId()] = true; //ads the right personZero first and that they always believe by default
+
+
+        //day cycle
+         for (int i = 0; i < d; i++) {
+             boolean[] newBelieves = believes.clone();
+
+             for (int j = 0; j < n; j++) {
+                 //makes sure that the following code is only for all who does believe the rumor because they can spread it
+                 if (!believes[j]) continue;
+
+                 //go through only neighbors that dont belive already ad increase times they heard the rumor
+                 for (int k : graph.adj(j)) {
+                     if (!believes[k]) {
+                         timesHeard[k]++;
+
+                         //compares times heard and their individual skeptism in order to decide if the believe or not
+                         if (timesHeard[k] >= (int) persons[k].getSkep()) {
+                             newBelieves[k] = true;
+                         }
+                     }
+                 }
+             }
+             believes = newBelieves;
+         }
+
+         //makes sure to exclude person zero in all the persons and add all does who are not o
+        for (int i = 0; i < n; i++) {
+            if (believes[i] && i != p0.getId()) {
+                rumoredHeardBy++;
+            }
+        }
 
 
 
@@ -126,8 +152,8 @@ public class Main {
 
     //Princeton
 
-
-    public class Digraph {
+    //Digraph Class
+    public static class Digraph {
         private static final String NEWLINE = System.getProperty("line.separator");
 
         private final int V;           // number of vertices in this digraph
@@ -336,160 +362,6 @@ public class Main {
             return s.toString();
         }
 
-
-
-    }
-
-    public class BreadthFirstDirectedPaths {
-        private static final int INFINITY = Integer.MAX_VALUE;
-        private boolean[] marked;  // marked[v] = is there an s->v path?
-        private int[] edgeTo;      // edgeTo[v] = last edge on shortest s->v path
-        private int[] distTo;      // distTo[v] = length of shortest s->v path
-
-        /**
-         * Computes the shortest path from {@code s} and every other vertex in {@code digraph}.
-         * @param digraph the digraph
-         * @param s the source vertex
-         * @throws IllegalArgumentException unless {@code 0 <= v < V}
-         */
-        public BreadthFirstDirectedPaths(Digraph digraph, int s) {
-            marked = new boolean[digraph.V()];
-            distTo = new int[digraph.V()];
-            edgeTo = new int[digraph.V()];
-            for (int v = 0; v < digraph.V(); v++)
-                distTo[v] = INFINITY;
-            validateVertex(s);
-            bfs(digraph, s);
-        }
-
-        /**
-         * Computes the shortest path from any one of the source vertices in {@code sources}
-         * to every other vertex in {@code digraph}.
-         * @param digraph the digraph
-         * @param sources the source vertices
-         * @throws IllegalArgumentException if {@code sources} is {@code null}
-         * @throws IllegalArgumentException if {@code sources} contains no vertices
-         * @throws IllegalArgumentException unless each vertex {@code v} in
-         *         {@code sources} satisfies {@code 0 <= v < V}
-         */
-        public BreadthFirstDirectedPaths(Digraph digraph, Iterable<Integer> sources) {
-            marked = new boolean[digraph.V()];
-            distTo = new int[digraph.V()];
-            edgeTo = new int[digraph.V()];
-            for (int v = 0; v < digraph.V(); v++)
-                distTo[v] = INFINITY;
-            validateVertices(sources);
-            bfs(digraph, sources);
-        }
-
-        // BFS from single source
-        private void bfs(Digraph digraph, int s) {
-            Queue<Integer> queue = new Queue<Integer>();
-            marked[s] = true;
-            distTo[s] = 0;
-            queue.enqueue(s);
-            while (!queue.isEmpty()) {
-                int v = queue.dequeue();
-                for (int w : digraph.adj(v)) {
-                    if (!marked[w]) {
-                        edgeTo[w] = v;
-                        distTo[w] = distTo[v] + 1;
-                        marked[w] = true;
-                        queue.enqueue(w);
-                    }
-                }
-            }
-        }
-
-        // BFS from multiple sources
-        private void bfs(Digraph digraph, Iterable<Integer> sources) {
-            Queue<Integer> queue = new Queue<Integer>();
-            for (int s : sources) {
-                marked[s] = true;
-                distTo[s] = 0;
-                queue.enqueue(s);
-            }
-            while (!queue.isEmpty()) {
-                int v = queue.dequeue();
-                for (int w : digraph.adj(v)) {
-                    if (!marked[w]) {
-                        edgeTo[w] = v;
-                        distTo[w] = distTo[v] + 1;
-                        marked[w] = true;
-                        queue.enqueue(w);
-                    }
-                }
-            }
-        }
-
-        /**
-         * Is there a directed path from the source {@code s} (or sources) to vertex {@code v}?
-         * @param v the vertex
-         * @return {@code true} if there is a directed path, {@code false} otherwise
-         * @throws IllegalArgumentException unless {@code 0 <= v < V}
-         */
-        public boolean hasPathTo(int v) {
-            validateVertex(v);
-            return marked[v];
-        }
-
-        /**
-         * Returns the number of edges in a shortest path from the source {@code s}
-         * (or sources) to vertex {@code v}?
-         * @param v the vertex
-         * @return the number of edges in such a shortest path
-         *         (or {@code Integer.MAX_VALUE} if there is no such path)
-         * @throws IllegalArgumentException unless {@code 0 <= v < V}
-         */
-        public int distTo(int v) {
-            validateVertex(v);
-            return distTo[v];
-        }
-
-        /**
-         * Returns a shortest path from {@code s} (or sources) to {@code v}, or
-         * {@code null} if no such path.
-         * @param v the vertex
-         * @return the sequence of vertices on a shortest path, as an Iterable
-         * @throws IllegalArgumentException unless {@code 0 <= v < V}
-         */
-        public Iterable<Integer> pathTo(int v) {
-            validateVertex(v);
-
-            if (!hasPathTo(v)) return null;
-            Stack<Integer> path = new Stack<Integer>();
-            int x;
-            for (x = v; distTo[x] != 0; x = edgeTo[x])
-                path.push(x);
-            path.push(x);
-            return path;
-        }
-
-        // throw an IllegalArgumentException unless {@code 0 <= v < V}
-        private void validateVertex(int v) {
-            int V = marked.length;
-            if (v < 0 || v >= V)
-                throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V-1));
-        }
-
-        // throw an IllegalArgumentException if vertices is null, has zero vertices,
-        // or has a vertex not between 0 and V-1
-        private void validateVertices(Iterable<Integer> vertices) {
-            if (vertices == null) {
-                throw new IllegalArgumentException("argument is null");
-            }
-            int vertexCount = 0;
-            for (Integer v : vertices) {
-                vertexCount++;
-                if (v == null) {
-                    throw new IllegalArgumentException("vertex is null");
-                }
-                validateVertex(v);
-            }
-            if (vertexCount == 0) {
-                throw new IllegalArgumentException("zero vertices");
-            }
-        }
 
 
     }
